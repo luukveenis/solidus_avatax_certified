@@ -48,7 +48,7 @@ describe Spree::Refund, :vcr do
 
   describe '#avalara_tax_enabled?' do
     it 'should return true' do
-      expect(Spree::Refund.new.avalara_tax_enabled?).to eq(true)
+      expect(refund.avalara_tax_enabled?).to eq(true)
     end
   end
 

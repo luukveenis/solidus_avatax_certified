@@ -2,9 +2,7 @@ Spree::Refund.class_eval do
   has_one :avalara_transaction
   after_create :avalara_capture_finalize, if: :avalara_tax_enabled?
 
-  def avalara_tax_enabled?
-    Spree::Avatax::Config.tax_calculation
-  end
+  delegate :avalara_tax_enabled?, to: :payment
 
   def avalara_capture_finalize
     logger.info "Start Spree::Refund#avalara_capture_finalize for order #{payment.order.number}"
