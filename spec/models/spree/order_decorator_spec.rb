@@ -9,7 +9,13 @@ describe Spree::Order, :vcr do
 
   describe "#avalara_tax_enabled?" do
     it "should return true" do
-      expect(Spree::Order.new.avalara_tax_enabled?).to eq(true)
+      expect(Spree::Order.new.avalara_tax_enabled?).to eq(false)
+    end
+
+    context 'order has a avalara tax' do
+      it "should return false" do
+        expect(Spree::Order.new.avalara_tax_enabled?).to eq(false)
+      end
     end
   end
 

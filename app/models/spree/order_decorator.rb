@@ -10,7 +10,9 @@ Spree::Order.class_eval do
                                       :if => :address_validation_enabled?
 
   def avalara_tax_enabled?
-    Spree::Avatax::Config.tax_calculation
+    avalara_transaction.present? || all_adjustments.any? {
+      |adj| adj.source.calculator.kind_of? Spree::Calculator::AvalaraTransaction
+    }
   end
 
   def cancel_avalara
