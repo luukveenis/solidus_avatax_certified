@@ -11,7 +11,7 @@ Spree::Order.class_eval do
 
   def avalara_tax_enabled?
     avalara_transaction.present? || all_adjustments.any? {
-      |adj| adj.source.calculator.kind_of? Spree::Calculator::AvalaraTransaction
+      |adj| adj.source&.calculator.kind_of? Spree::Calculator::AvalaraTransaction
     }
   end
 
