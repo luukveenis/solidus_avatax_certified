@@ -63,7 +63,7 @@ module Spree
 
     def long_cache_key(order)
       key = order.avatax_cache_key
-      key << order.tax_address.try(:cache_key)
+      key << order.tax_address.try(:cache_key).to_s
       order.line_items.each do |line_item|
         key << line_item.avatax_cache_key
       end
