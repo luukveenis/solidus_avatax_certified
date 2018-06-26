@@ -1,8 +1,41 @@
 require 'spec_helper'
 
 RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
-  let(:order) { create(:avalara_order, line_items_count: 2) }
-  subject { described_class.new(order, commit: false, doc_type: 'SalesOrder') }
+  let(:user) { create(:user, email: "test@example.com") }
+  let(:california) { create(:state, state_code: "CA") }
+  let(:stock_location) do
+    create(
+      :stock_location,
+      address1: "1070 Lombard Street",
+      city: "San Francisco",
+      zipcode: "94109",
+      state: california
+    )
+  end
+  let(:address) do
+    create(
+      :address,
+      address1: "42 Fake Street",
+      address2: "Southeast",
+      city: "Los Angeles",
+      zipcode: "90210",
+      state: california,
+      country_iso_code: 'US',
+    )
+  end
+  let(:order) do
+    create(
+      :avalara_order,
+      user: user,
+      line_items_count: 1,
+      line_items_price: 5,
+      bill_address: address,
+      ship_address: address,
+      stock_location: stock_location
+    )
+  end
+  let(:shipment) { order.shipments.first }
+  let(:line_item) { order.line_items.first }
 
   before do
     VCR.use_cassette('order_capture', allow_playback_repeats: true) do
@@ -11,16 +44,87 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
   end
 
   describe '#generate' do
-    it 'creates a hash' do
-      expect(subject.generate).to be_kind_of Hash
-    end
+    subject { described_class.new(order, commit: false, doc_type: 'SalesOrder').generate }
 
-    it 'Commit has value of false' do
-      expect(subject.generate[:createTransactionModel][:commit]).to be false
-    end
-
-    it 'has ReferenceCode from base_tax_hash' do
-      expect(subject.generate[:createTransactionModel][:referenceCode]).to eq(order.number)
+    it 'creates a hash with correct values' do
+      expect(subject).to include(
+        createTransactionModel: {
+          code: order.number,
+          date: Date.today.to_s,
+          discount: "0.0",
+          commit: false,
+          type: "SalesOrder",
+          lines: [
+            {
+              number: "#{line_item.id}-LI",
+              description: line_item.name,
+              taxCode: "PC030000",
+              itemCode: line_item.variant.sku,
+              quantity: 1,
+              amount: 5.0,
+              discounted: false,
+              taxIncluded: false,
+              addresses: {
+                shipFrom: {
+                  line1: "1070 Lombard Street",
+                  line2: nil,
+                  city: "San Francisco",
+                  region: "CA",
+                  country: "US",
+                  postalCode: "94109"
+                }, shipTo: {
+                  line1: "42 Fake Street",
+                  line2: "Southeast",
+                  city: "Los Angeles",
+                  region: "CA",
+                  country: "US",
+                  postalCode: "90210"
+                }
+              },
+              customerUsageType: nil,
+              businessIdentificationNo: nil,
+              exemptionCode: nil
+            },
+            {
+              number: "#{shipment.id}-FR",
+              itemCode: shipment.shipping_method.name,
+              quantity: 1,
+              amount: 5.0,
+              description: "Shipping Charge",
+              taxCode: "FR000000",
+              discounted: false,
+              taxIncluded: false,
+              addresses: {
+                shipFrom: {
+                  line1: "1070 Lombard Street",
+                  line2: nil,
+                  city: "San Francisco",
+                  region: "CA",
+                  country: "US",
+                  postalCode: "94109"
+                }, shipTo: {
+                  line1: "42 Fake Street",
+                  line2: "Southeast",
+                  city: "Los Angeles",
+                  region: "CA",
+                  country: "US",
+                  postalCode: "90210"
+                }
+              },
+              customerUsageType: nil,
+              businessIdentificationNo: nil,
+              exemptionCode: nil
+            }
+          ],
+          customerCode: anything,
+          companyCode: anything,
+          customerUsageType: nil,
+          exemptionNo: nil,
+          referenceCode: order.number,
+          currencyCode: "USD",
+          businessIdentificationNo: nil
+        }
+      )
     end
   end
 end
