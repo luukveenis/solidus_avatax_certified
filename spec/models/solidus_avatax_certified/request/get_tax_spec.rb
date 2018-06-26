@@ -126,5 +126,57 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         }
       )
     end
+
+    context "with a line item discount" do
+      let!(:promotion) { create(:promotion, :with_line_item_adjustment, code: "test") }
+
+      before do
+        order.coupon_code = "test"
+        expect(Spree::PromotionHandler::Coupon.new(order).apply).to be_successful
+      end
+
+      it "sends an invoice discount amount" do
+        expect(subject).to include(
+          createTransactionModel: hash_including(
+            discount: "5.0",
+            lines: [
+              hash_including(
+                amount: 5.0,
+                discounted: true
+              ),
+              anything
+            ]
+          )
+        )
+      end
+    end
+
+    context "with free shipping" do
+      let!(:free_shipping) { Spree::Promotion::Actions::FreeShipping.new }
+      let!(:promotion) { create(:promotion, code: "test", promotion_actions: [free_shipping]) }
+
+      before do
+        order.coupon_code = "test"
+        expect(Spree::PromotionHandler::Coupon.new(order).apply).to be_successful
+      end
+
+
+      # TODO this test will fail as is because we send shipping discounts in
+      # invoice discount, but then also send the discounted amount for the item.
+      xit "sends the discounted shipment amount" do
+        expect(subject).to include(
+          createTransactionModel: hash_including(
+            discount: "0.0",
+            lines: [
+              anything,
+              hash_including(
+                amount: 0.0,
+                discounted: false
+              )
+            ]
+          )
+        )
+      end
+    end
   end
 end
