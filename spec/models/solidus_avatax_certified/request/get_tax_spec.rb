@@ -51,7 +51,7 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         createTransactionModel: {
           code: order.number,
           date: Date.today.to_s,
-          discount: "0.0",
+          discount: 0.0,
           commit: false,
           type: "SalesOrder",
           lines: [
@@ -135,10 +135,10 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         expect(Spree::PromotionHandler::Coupon.new(order).apply).to be_successful
       end
 
-      it "sends an invoice discount amount" do
+      it "sends the full item price and an invoice discount" do
         expect(subject).to include(
           createTransactionModel: hash_including(
-            discount: "5.0",
+            discount: 5.0,
             lines: [
               hash_including(
                 amount: 5.0,
@@ -161,12 +161,10 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
       end
 
 
-      # TODO this test will fail as is because we send shipping discounts in
-      # invoice discount, but then also send the discounted amount for the item.
-      xit "sends the discounted shipment amount" do
+      it "sends the discounted shipment amount" do
         expect(subject).to include(
           createTransactionModel: hash_including(
-            discount: "0.0",
+            discount: 0.0,
             lines: [
               anything,
               hash_including(

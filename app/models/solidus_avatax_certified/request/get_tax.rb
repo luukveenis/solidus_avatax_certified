@@ -6,7 +6,7 @@ module SolidusAvataxCertified
           createTransactionModel: {
             code: order.number,
             date: doc_date,
-            discount: order.all_adjustments.promotion.eligible.sum(:amount).abs.to_s,
+            discount: discount_total,
             commit: @commit,
             type: @doc_type ? @doc_type : 'SalesOrder',
             lines: sales_lines
@@ -15,6 +15,14 @@ module SolidusAvataxCertified
       end
 
       protected
+
+      # Sums all eligible order and line item promotion adjustments. This
+      # excludes shipping promotions because we already send the discounted
+      # shipment amount, so this would double count those.
+      def discount_total
+        order.all_adjustments.where.not(adjustable_type: "Spree::Shipment").
+          promotion.eligible.sum(:amount).abs.to_f
+      end
 
       def doc_date
         order.completed? ? order.completed_at.strftime('%F') : Date.today.strftime('%F')
