@@ -30,8 +30,8 @@ module SolidusAvataxCertified
         taxCode: line_item.tax_category.try(:tax_code) || '',
         itemCode: line_item.variant.sku,
         quantity: line_item.quantity,
-        amount: line_item.amount.to_f,
-        discounted: discounted?(line_item),
+        amount: line_item.discounted_amount.to_f,
+        discounted: false,
         taxIncluded: tax_included_in_price?(line_item),
         addresses: {
           shipFrom: get_stock_location(line_item),
@@ -152,10 +152,6 @@ module SolidusAvataxCertified
 
     def business_id_no
       order.user.try(:vat_id)
-    end
-
-    def discounted?(line_item)
-      line_item.adjustments.promotion.eligible.any? || order.adjustments.promotion.eligible.any?
     end
 
     def tax_included_in_price?(item)
