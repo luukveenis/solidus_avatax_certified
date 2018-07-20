@@ -13,6 +13,7 @@ FactoryBot.define do
       line_items_count 1
       line_items_quantity 1
       shipment_cost 5
+      stock_location { build(:stock_location) }
       tax_category Spree::TaxCategory.first
       tax_included false
     end
@@ -35,7 +36,7 @@ FactoryBot.define do
       create_list(:line_item, evaluator.line_items_count, order: order, price: evaluator.line_items_price, tax_category: evaluator.tax_category, quantity: evaluator.line_items_quantity)
       order.line_items.reload
 
-      create(:avalara_shipment, order: order, cost: evaluator.shipment_cost, tax_included: evaluator.tax_included)
+      create(:avalara_shipment, order: order, cost: evaluator.shipment_cost, tax_included: evaluator.tax_included, stock_location: evaluator.stock_location)
       order.shipments.reload
 
       order.updater.update
