@@ -8,14 +8,34 @@ describe Spree::Order, :vcr do
   let(:completed_order) { create(:completed_avalara_order) }
 
   describe "#avalara_tax_enabled?" do
-    it "should return true" do
-      expect(Spree::Order.new.avalara_tax_enabled?).to eq(false)
+    let(:order) { Spree::Order.new }
+
+    subject { order.avalara_tax_enabled? }
+
+    context "order has an avarala transaction" do
+      before { order.build_avalara_transaction }
+
+      it { is_expected.to be true }
     end
 
-    context 'order has a avalara tax' do
-      it "should return false" do
-        expect(Spree::Order.new.avalara_tax_enabled?).to eq(false)
-      end
+    context 'order has an avalara tax adjustment' do
+      let(:avalara_tax_rate) { build(:clothing_tax_rate) }
+
+      before { order.all_adjustments.build(source: avalara_tax_rate) }
+
+      it { is_expected.to be true }
+    end
+
+    context 'order does not have an avalara transaction or tax adjustment' do
+      it { is_expected. to be false }
+    end
+
+    # This is a regression test. Previously this would throw a no method error
+    # for `.calculator` on the adjustment source
+    context 'order has non-calculated adjustments' do
+      before { order.all_adjustments.build(source: Spree::Promotion::Actions::FreeShipping.new) }
+
+      it { is_expected.to be false }
     end
   end
 
