@@ -25,7 +25,21 @@ module SolidusAvataxCertified
           referenceCode: order.number,
           currencyCode: order.currency,
           businessIdentificationNo: business_id_no
-        }
+        }.merge(tax_date_override)
+      end
+
+      def tax_date_override
+        if order.completed?
+          {
+            taxOverride: {
+              type: 'TaxDate',
+              reason: 'Completed At',
+              taxDate: order.completed_at.strftime('%F')
+            }
+          }
+        else
+          {}
+        end
       end
 
       def address_lines

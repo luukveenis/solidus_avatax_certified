@@ -176,5 +176,22 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         )
       end
     end
+
+    context "with a completed order" do
+      let(:completed_at) { Time.parse("2018-02-28") }
+      let(:order) { create(:order, state: 'complete', completed_at: completed_at) }
+
+      it "includes a tax date override" do
+        expect(subject).to include(
+          createTransactionModel: hash_including(
+            taxOverride: {
+              type: 'TaxDate',
+              reason: 'Completed At',
+              taxDate: "2018-02-28"
+            }
+          )
+        )
+      end
+    end
   end
 end
