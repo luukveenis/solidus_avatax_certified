@@ -27,6 +27,14 @@ describe Spree::Calculator::AvalaraTransaction, :vcr do
       end
     end
     context 'when computing a line item' do
+      context "when the tax rate is expired" do
+        before { calculator.calculable.update!(expires_at: 1.day.ago) }
+
+        it "returns 0 for the tax amount" do
+          expect(calculator.compute(line_item)).to be_zero
+        end
+      end
+
       context 'when tax is included in price' do
         let(:included_in_price) { true }
         it 'should be equal to the item pre-tax total * rate' do

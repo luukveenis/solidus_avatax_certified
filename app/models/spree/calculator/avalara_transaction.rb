@@ -9,6 +9,7 @@ module Spree
     end
 
     def compute_shipment_or_line_item(item)
+      return 0 unless rate.active?
       order = item.order
 
       if can_calculate_tax?(order)
